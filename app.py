@@ -8,6 +8,19 @@ import json
 from io import BytesIO
 import requests
 import matplotlib.pyplot as plt
+from tensorflow.keras.applications.efficientnet import preprocess_input
+from openai import OpenAI   # ✅ NEW
+import gdown
+import os
+
+if not os.path.exists("breed_classifier.h5"):
+    url = "https://drive.google.com/uc?id=10DWjY7vK6ceMsoFeH5o712j9d6ead2mI"
+    gdown.download(url, "breed_classifier.h5", quiet=False)
+# 🔥 CHATBOT CLIENT
+client = OpenAI(
+    api_key="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",
+    base_url="https://openrouter.ai/api/v1"
+)
 
 # --------------------------
 # CONFIG
@@ -111,11 +124,11 @@ breed_info = {
     "murrah": "High milk yielding buffalo breed.",
     "nagori": "Fast and strong draught cattle.",
     "nagpuri": "Adaptable buffalo breed with moderate milk.",
-    "Ongole": "Muscular and disease-resistant breed from Andhra Pradesh, widely used for breeding and draught work.",
-    "Rathi": "Good dairy breed from Rajasthan known for adaptability.",
+    "Ongole": "Muscular and disease-resistant breed from Andhra Pradesh.",
+    "Rathi": "Good dairy breed from Rajasthan.",
     "Red Sindhi": "High milk producing breed suitable for tropical climates.",
-    "Sahiwal": "Top dairy breed with heat tolerance and high milk yield.",
-    "surti": "Buffalo breed known for moderate milk and high fat content."
+    "Sahiwal": "Top dairy breed with heat tolerance.",
+    "surti": "Buffalo breed known for moderate milk."
 }
 
 # --------------------------
@@ -125,95 +138,98 @@ st.markdown('<div class="hero-title">Cattle Breed <span>Detection</span></div>',
 st.markdown('<div class="hero-sub">Upload an image or use URL to detect cattle breed instantly</div>', unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --------------------------
-# 🧠 ABOUT
-# --------------------------
-st.markdown("## 🧠 About This Project")
-st.markdown("""
-<div class="glass">
-AI-based cattle breed detection using deep learning for smart agriculture.
-</div>
-""", unsafe_allow_html=True)
+# 🔥 TABS (NEW)
+tab1, tab2 = st.tabs(["🐄 Breed Detection", "🤖 Chatbot"])
 
-# --------------------------
-# MAIN LAYOUT
-# --------------------------
-col1, col2 = st.columns([1.2, 1])
+# =========================
+# 🐄 TAB 1 (YOUR FULL CODE)
+# =========================
+with tab1:
 
-with col1:
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
+    # --------------------------
+    # 🧠 ABOUT
+    # --------------------------
+    st.markdown("## 🧠 About This Project")
+    st.markdown("""
+    <div class="glass">
+    AI-based cattle breed detection using deep learning for smart agriculture.
+    </div>
+    """, unsafe_allow_html=True)
 
-    file = st.file_uploader("📤 Upload Image", type=["jpg","png","jpeg"])
-    url = st.text_input("🌐 Or paste Image URL")
+    # --------------------------
+    # MAIN LAYOUT
+    # --------------------------
+    col1, col2 = st.columns([1.2, 1])
 
-    url_img = None
+    with col1:
+        st.markdown('<div class="glass">', unsafe_allow_html=True)
 
-    if url:
-        try:
-            response = requests.get(url)
-            url_img = Image.open(BytesIO(response.content)).convert("RGB")
-            st.image(url_img, width=450)
-        except:
-            st.error("❌ Invalid URL")
+        file = st.file_uploader("📤 Upload Image", type=["jpg","png","jpeg"])
+        url = st.text_input("🌐 Or paste Image URL")
 
-    if file is not None:
-        img = Image.open(file).convert("RGB")
-        st.image(img, width=450)
+        url_img = None
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        if url:
+            try:
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
 
-with col2:
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
+                url_img = Image.open(BytesIO(response.content)).convert("RGB")
+                url_img = url_img.copy()
+                st.image(url_img, width=450)
 
-    st.markdown("### 📌 Guidelines")
-    st.write("• Use clear cattle image")
-    st.write("• Full body preferred")
-    st.write("• Avoid blurry photos")
+            except:
+                st.error("❌ Invalid URL or cannot load image")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        if file is not None:
+            img = Image.open(file).convert("RGB")
+            st.image(img, width=450)
 
-# --------------------------
-# 🔥 SMART PREDICTION FUNCTION
-# --------------------------
-def smart_predict(img, filename):
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    if filename in mapping:
-        return f"🔥 {mapping[filename]} (Exact Match)"
+    with col2:
+        st.markdown('<div class="glass">', unsafe_allow_html=True)
 
-    for breed in class_names:
-        if breed.lower() in filename.lower():
-            return f"🔥 {breed} (Filename Match)"
+        st.markdown("### 📌 Guidelines")
+        st.write("• Use clear cattle image")
+        st.write("• Full body preferred")
+        st.write("• Avoid blurry photos")
 
-    img_resized = img.resize((224,224))
-    img_array = np.array(img_resized)/255.0
-    img_array = np.expand_dims(img_array, axis=0)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    preds = model.predict(img_array)[0]
-    top3_idx = preds.argsort()[-3:][::-1]
+    # --------------------------
+    # 🔥 SMART PREDICTION FUNCTION
+    # --------------------------
+    def smart_predict(img, filename):
 
-    results = []
-    for i in top3_idx:
-        confidence = preds[i]*100
-        if confidence > 85:
-            confidence = 99.0
-        results.append((class_names[i], confidence))
+        img_resized = img.resize((224,224))
+        img_array = np.array(img_resized).astype(np.float32)
+        img_array = preprocess_input(img_array)
+        img_array = np.expand_dims(img_array, axis=0)
 
-    return results
+        preds = model.predict(img_array)[0]
+        top3_idx = preds.argsort()[-3:][::-1]
 
-# --------------------------
-# PREDICTION (🔥 FIXED)
-# --------------------------
-if file is not None or url_img is not None:
+        results = []
+        for i in top3_idx:
+            confidence = preds[i]*100
+            results.append((class_names[i], confidence))
 
-    st.markdown("## 🔍 Results")
+        return results
 
-    if file is not None:
-        result = smart_predict(img, file.name)
-    else:
-        result = smart_predict(url_img, "url_image")
+    # --------------------------
+    # PREDICTION
+    # --------------------------
+    if file is not None or url_img is not None:
 
-    # LIST CASE
-    if isinstance(result, list):
+        st.markdown("## 🔍 Results")
+
+        if file is not None:
+            final_img = img
+        else:
+            final_img = url_img
+
+        result = smart_predict(final_img, "input_image")
 
         for breed, confidence in result:
             st.write(f"👉 {breed} — {confidence:.2f}% Confidence")
@@ -222,51 +238,67 @@ if file is not None or url_img is not None:
         final_breed = result[0][0]
         st.success(f"🏆 Final Prediction: {final_breed}")
 
-    # STRING CASE
-    else:
-        st.success(result)
-        final_breed = result.split("🔥 ")[-1].split(" (")[0]
+        if final_breed in breed_info:
+            st.markdown("## 📘 Breed Details")
+            st.info(breed_info[final_breed])
 
-    # 🔥 ALWAYS SHOW BREED INFO
-    if final_breed in breed_info:
-        st.markdown("## 📘 Breed Details")
-        st.info(breed_info[final_breed])
+    # --------------------------
+    # ⚙️ FEATURES
+    # --------------------------
+    st.markdown("## ⚙️ System Features")
 
-# --------------------------
-# ⚙️ FEATURES
-# --------------------------
-st.markdown("## ⚙️ System Features")
+    c1, c2, c3 = st.columns(3)
+    c1.success("📷 Image Upload Detection")
+    c2.success("🌐 URL Based Prediction")
+    c3.success("🤖 Deep Learning Model")
 
-c1, c2, c3 = st.columns(3)
-c1.success("📷 Image Upload Detection")
-c2.success("🌐 URL Based Prediction")
-c3.success("🤖 Deep Learning Model")
+    # --------------------------
+    # 📂 DATASET INFO
+    # --------------------------
+    st.markdown("## 📂 Dataset Overview")
+    st.markdown(f"""
+    <div class="glass">
+    Total Classes: {len(class_names)} <br>
+    Image Size: 224x224 <br>
+    Model: EfficientNetB0
+    </div>
+    """, unsafe_allow_html=True)
 
-# --------------------------
-# 📂 DATASET INFO
-# --------------------------
-st.markdown("## 📂 Dataset Overview")
-st.markdown(f"""
-<div class="glass">
-Total Classes: {len(class_names)} <br>
-Image Size: 224x224 <br>
-Model: CNN / Transfer Learning
-</div>
-""", unsafe_allow_html=True)
+    # --------------------------
+    # 📊 MODEL PERFORMANCE
+    # --------------------------
+    if metrics:
+        st.markdown("## 📊 Model Performance")
 
-# --------------------------
-# 📊 MODEL PERFORMANCE
-# --------------------------
-if metrics:
-    st.markdown("## 📊 Model Performance")
+        col1, col2, col3, col4 = st.columns(4)
 
-    col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Accuracy", f"{metrics['accuracy']*100:.2f}%")
+        col2.metric("Precision", f"{metrics['precision']*100:.2f}%")
+        col3.metric("Recall", f"{metrics['recall']*100:.2f}%")
+        col4.metric("F1 Score", f"{metrics['f1_score']*100:.2f}%")
 
-    col1.metric("Accuracy", f"{metrics['accuracy']*100:.2f}%")
-    col2.metric("Precision", f"{metrics['precision']*100:.2f}%")
-    col3.metric("Recall", f"{metrics['recall']*100:.2f}%")
-    col4.metric("F1 Score", f"{metrics['f1_score']*100:.2f}%")
+# =========================
+# 🤖 TAB 2 (CHATBOT)
+# =========================
+with tab2:
 
+    st.markdown("## 🤖 Smart Cattle Assistant")
+
+    user_input = st.text_input("Ask anything about cattle...")
+
+    if user_input:
+        with st.spinner("Thinking..."):
+            try:
+                response = client.chat.completions.create(
+                    model="openai/gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are an expert in cattle breeds."},
+                        {"role": "user", "content": user_input}
+                    ]
+                )
+                st.success(response.choices[0].message.content)
+            except Exception as e:
+                st.error(str(e))
 
 # --------------------------
 # FOOTER

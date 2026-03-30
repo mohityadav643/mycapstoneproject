@@ -8,6 +8,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCh
 
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
+import json
 
 # -----------------------------
 # PATHS
@@ -20,28 +21,45 @@ IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 
 # -----------------------------
-# DATA GENERATOR (OPTIMIZED)
+# 🔥 STRONG AUGMENTATION (FIXED)
 # -----------------------------
 train_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
-    rotation_range=15,
-    zoom_range=0.15,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    horizontal_flip=True
+    rotation_range=30,
+    zoom_range=0.3,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    brightness_range=[0.5, 1.5],
+    horizontal_flip=True,
+    fill_mode="nearest"
 )
 
-val_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+val_datagen = ImageDataGenerator(preprocess_input)
 
-train_data = train_datagen.flow_from_directory(train_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical")
-val_data = val_datagen.flow_from_directory(val_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical")
-test_data = val_datagen.flow_from_directory(test_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical", shuffle=False)
+train_data = train_datagen.flow_from_directory(
+    train_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical"
+)
+
+val_data = val_datagen.flow_from_directory(
+    val_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical"
+)
+
+test_data = val_datagen.flow_from_directory(
+    test_dir, target_size=IMG_SIZE, batch_size=BATCH_SIZE, class_mode="categorical", shuffle=False
+)
 
 NUM_CLASSES = len(train_data.class_indices)
 print("🔥 Classes:", train_data.class_indices)
 
 # -----------------------------
-# CLASS WEIGHTS (ONLY IF NEEDED)
+# SAVE CLASS MAPPING
+# -----------------------------
+with open("class_indices.json", "w") as f:
+    json.dump(train_data.class_indices, f)
+
+# -----------------------------
+# CLASS WEIGHTS
 # -----------------------------
 class_weights = compute_class_weight(
     class_weight="balanced",
@@ -51,7 +69,7 @@ class_weights = compute_class_weight(
 class_weights = dict(enumerate(class_weights))
 
 # -----------------------------
-# MODEL (EfficientNetB0)
+# MODEL
 # -----------------------------
 base_model = EfficientNetB0(
     weights="imagenet",
@@ -59,21 +77,20 @@ base_model = EfficientNetB0(
     input_shape=(224,224,3)
 )
 
-# Freeze most layers
-for layer in base_model.layers[:-30]:
+# 🔥 FIX 1 — freeze kam kar
+for layer in base_model.layers[:-60]:
     layer.trainable = False
 
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
 
-# 🔥 Strong classifier head
 x = BatchNormalization()(x)
 
 x = Dense(512, activation="relu")(x)
-x = Dropout(0.4)(x)
+x = Dropout(0.5)(x)
 
 x = Dense(256, activation="relu")(x)
-x = Dropout(0.3)(x)
+x = Dropout(0.4)(x)
 
 output = Dense(NUM_CLASSES, activation="softmax")(x)
 
@@ -83,43 +100,42 @@ model = Model(inputs=base_model.input, outputs=output)
 # COMPILE
 # -----------------------------
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
     loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
-
-model.summary()
 
 # -----------------------------
 # CALLBACKS
 # -----------------------------
 callbacks = [
-    EarlyStopping(patience=6, restore_best_weights=True),
-    ReduceLROnPlateau(patience=3, factor=0.3, min_lr=1e-6),
+    EarlyStopping(patience=5, restore_best_weights=True),
+    ReduceLROnPlateau(patience=2, factor=0.3, min_lr=1e-6),
     ModelCheckpoint("best_model.h5", save_best_only=True)
 ]
 
 # -----------------------------
-# TRAIN PHASE 1
+# TRAIN PHASE 1 (🔥 LONGER)
 # -----------------------------
 model.fit(
     train_data,
     validation_data=val_data,
-    epochs=30,
+    epochs=30,   # 🔥 increased
     callbacks=callbacks,
     class_weight=class_weights
 )
 
 # -----------------------------
-# FINE TUNING
+# 🔥 FINE TUNING (CORRECT)
 # -----------------------------
 print("🔥 Fine-tuning started...")
 
-for layer in base_model.layers:
+# 🔥 only deeper layers train
+for layer in base_model.layers[-60:]:
     layer.trainable = True
 
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5),
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-6),
     loss="categorical_crossentropy",
     metrics=["accuracy"]
 )
@@ -137,7 +153,9 @@ model.fit(
 loss, acc = model.evaluate(test_data)
 print(f"✅ Test Accuracy: {acc*100:.2f}%")
 
+# -----------------------------
+# SAVE MODEL
+# -----------------------------
 model.save("breed_classifier.h5")
 
 print("🚀 TRAINING COMPLETE")
-

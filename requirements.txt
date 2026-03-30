@@ -1,5 +1,8 @@
-\flask
-tensorflow==2.10.0
-numpy==1.23.5
+streamlit
+tensorflow
+numpy
 pillow
-prometheus_client
+requests
+matplotlib
+openai
+gdown

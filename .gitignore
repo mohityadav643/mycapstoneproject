@@ -1,9 +1,7 @@
 venv/
 __pycache__/
 *.pyc
-
-dataset/
-*.npy
-
 *.h5
-*.keras
+dataset/
+mapping.json
+metrics.json
