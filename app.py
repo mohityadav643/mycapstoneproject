@@ -10,12 +10,7 @@ import requests
 import matplotlib.pyplot as plt
 from tensorflow.keras.applications.efficientnet import preprocess_input
 from openai import OpenAI   # ✅ NEW
-import gdown
-import os
 
-if not os.path.exists("breed_classifier.h5"):
-    url = "https://drive.google.com/uc?id=10DWjY7vK6ceMsoFeH5o712j9d6ead2mI"
-    gdown.download(url, "breed_classifier.h5", quiet=False)
 # 🔥 CHATBOT CLIENT
 client = OpenAI(
     api_key="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",
@@ -85,7 +80,14 @@ st.markdown(f"""
 # --------------------------
 # LOAD MODEL
 # --------------------------
-model = tf.keras.models.load_model("breed_classifier.h5")
+import gdown
+import os
+
+if not os.path.exists("breed_classifier.h5"):
+    url = "https://drive.google.com/uc?id=10DWjY7vK6ceMsoFeH5o712j9d6ead2mI"
+    gdown.download(url, "breed_classifier.h5", quiet=False)
+from keras.models import load_model
+model = load_model("breed_classifier.h5", compile=False)
 class_names = sorted(os.listdir("dataset/train"))
 
 # --------------------------
