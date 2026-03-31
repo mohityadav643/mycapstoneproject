@@ -1,6 +1,8 @@
 streamlit
 numpy
 pillow
-gdown
-h5py
+requests
 matplotlib
+gdown
+keras
+openai
