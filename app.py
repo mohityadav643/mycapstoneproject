@@ -1,21 +1,19 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
+import tensorflow as tf
 import os
 import base64
 import json
 from io import BytesIO
 import requests
 import matplotlib.pyplot as plt
+from tensorflow.keras.applications.efficientnet import preprocess_input
 from openai import OpenAI   # ✅ NEW
-
-# 🔥 FIX (REPLACEMENT OF TENSORFLOW PREPROCESS)
-def preprocess_input(img):
-    return img / 255.0
 
 # 🔥 CHATBOT CLIENT
 client = OpenAI(
-    api_key="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",   # 🔥 apni key daal
+    api_key="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",
     base_url="https://openrouter.ai/api/v1"
 )
 
@@ -82,15 +80,7 @@ st.markdown(f"""
 # --------------------------
 # LOAD MODEL
 # --------------------------
-import gdown
-
-if not os.path.exists("breed_classifier.h5"):
-    url = "https://drive.google.com/uc?id=10DWjY7vK6ceMsoFeH5o712j9d6ead2mI"
-    gdown.download(url, "breed_classifier.h5", quiet=False)
-
-from keras.models import load_model
-model = load_model("breed_classifier.h5", compile=False)
-
+model = tf.keras.models.load_model("breed_classifier.h5")
 class_names = sorted(os.listdir("dataset/train"))
 
 # --------------------------
@@ -143,14 +133,17 @@ st.markdown('<div class="hero-title">Cattle Breed <span>Detection</span></div>',
 st.markdown('<div class="hero-sub">Upload an image or use URL to detect cattle breed instantly</div>', unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 🔥 TABS
+# 🔥 TABS (NEW)
 tab1, tab2 = st.tabs(["🐄 Breed Detection", "🤖 Chatbot"])
 
 # =========================
-# 🐄 TAB 1
+# 🐄 TAB 1 (YOUR FULL CODE)
 # =========================
 with tab1:
 
+    # --------------------------
+    # 🧠 ABOUT
+    # --------------------------
     st.markdown("## 🧠 About This Project")
     st.markdown("""
     <div class="glass">
@@ -158,6 +151,9 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
+    # --------------------------
+    # MAIN LAYOUT
+    # --------------------------
     col1, col2 = st.columns([1.2, 1])
 
     with col1:
@@ -172,11 +168,13 @@ with tab1:
             try:
                 response = requests.get(url, timeout=10)
                 response.raise_for_status()
+
                 url_img = Image.open(BytesIO(response.content)).convert("RGB")
                 url_img = url_img.copy()
                 st.image(url_img, width=450)
+
             except:
-                st.error("❌ Invalid URL")
+                st.error("❌ Invalid URL or cannot load image")
 
         if file is not None:
             img = Image.open(file).convert("RGB")
@@ -186,12 +184,17 @@ with tab1:
 
     with col2:
         st.markdown('<div class="glass">', unsafe_allow_html=True)
+
         st.markdown("### 📌 Guidelines")
         st.write("• Use clear cattle image")
         st.write("• Full body preferred")
         st.write("• Avoid blurry photos")
+
         st.markdown('</div>', unsafe_allow_html=True)
 
+    # --------------------------
+    # 🔥 SMART PREDICTION FUNCTION
+    # --------------------------
     def smart_predict(img, filename):
 
         img_resized = img.resize((224,224))
@@ -209,11 +212,18 @@ with tab1:
 
         return results
 
+    # --------------------------
+    # PREDICTION
+    # --------------------------
     if file is not None or url_img is not None:
 
         st.markdown("## 🔍 Results")
 
-        final_img = img if file is not None else url_img
+        if file is not None:
+            final_img = img
+        else:
+            final_img = url_img
+
         result = smart_predict(final_img, "input_image")
 
         for breed, confidence in result:
@@ -227,6 +237,9 @@ with tab1:
             st.markdown("## 📘 Breed Details")
             st.info(breed_info[final_breed])
 
+    # --------------------------
+    # ⚙️ FEATURES
+    # --------------------------
     st.markdown("## ⚙️ System Features")
 
     c1, c2, c3 = st.columns(3)
@@ -234,6 +247,9 @@ with tab1:
     c2.success("🌐 URL Based Prediction")
     c3.success("🤖 Deep Learning Model")
 
+    # --------------------------
+    # 📂 DATASET INFO
+    # --------------------------
     st.markdown("## 📂 Dataset Overview")
     st.markdown(f"""
     <div class="glass">
@@ -243,17 +259,21 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
+    # --------------------------
+    # 📊 MODEL PERFORMANCE
+    # --------------------------
     if metrics:
         st.markdown("## 📊 Model Performance")
 
         col1, col2, col3, col4 = st.columns(4)
+
         col1.metric("Accuracy", f"{metrics['accuracy']*100:.2f}%")
         col2.metric("Precision", f"{metrics['precision']*100:.2f}%")
         col3.metric("Recall", f"{metrics['recall']*100:.2f}%")
         col4.metric("F1 Score", f"{metrics['f1_score']*100:.2f}%")
 
 # =========================
-# 🤖 CHATBOT
+# 🤖 TAB 2 (CHATBOT)
 # =========================
 with tab2:
 

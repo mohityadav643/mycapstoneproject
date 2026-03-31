@@ -1,8 +1,14 @@
 streamlit
 numpy
 pillow
-requests
 matplotlib
-gdown
-keras
+requests
+scikit-learn
+
+tensorflow==2.10.0
+keras==2.10.0
+
+protobuf==3.20.3
+typing_extensions==4.5.0
+
 openai

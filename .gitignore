@@ -1,7 +1,5 @@
 venv/
+tf_env/
 __pycache__/
 *.pyc
-*.h5
-dataset/
-mapping.json
-metrics.json
+.env
