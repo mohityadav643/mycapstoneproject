@@ -120,7 +120,7 @@ callbacks = [
 model.fit(
     train_data,
     validation_data=val_data,
-    epochs=30,   # 🔥 increased
+    epochs=30,
     callbacks=callbacks,
     class_weight=class_weights
 )
@@ -130,7 +130,6 @@ model.fit(
 # -----------------------------
 print("🔥 Fine-tuning started...")
 
-# 🔥 only deeper layers train
 for layer in base_model.layers[-60:]:
     layer.trainable = True
 
@@ -152,6 +151,44 @@ model.fit(
 # -----------------------------
 loss, acc = model.evaluate(test_data)
 print(f"✅ Test Accuracy: {acc*100:.2f}%")
+
+# -----------------------------
+# 🔥 ADD METRICS (NEW)
+# -----------------------------
+from sklearn.metrics import classification_report, accuracy_score, precision_score, recall_score, f1_score
+
+# Predictions
+y_pred_probs = model.predict(test_data)
+y_pred = np.argmax(y_pred_probs, axis=1)
+
+y_true = test_data.classes
+
+# Metrics calculate
+accuracy = accuracy_score(y_true, y_pred)
+precision = precision_score(y_true, y_pred, average='weighted')
+recall = recall_score(y_true, y_pred, average='weighted')
+f1 = f1_score(y_true, y_pred, average='weighted')
+
+print("\n📊 Detailed Metrics:")
+print(f"Accuracy: {accuracy*100:.2f}%")
+print(f"Precision: {precision*100:.2f}%")
+print(f"Recall: {recall*100:.2f}%")
+print(f"F1 Score: {f1*100:.2f}%")
+
+# -----------------------------
+# SAVE METRICS
+# -----------------------------
+metrics = {
+    "accuracy": float(accuracy),
+    "precision": float(precision),
+    "recall": float(recall),
+    "f1": float(f1)
+}
+
+with open("metrics.json", "w") as f:
+    json.dump(metrics, f)
+
+print("✅ metrics.json saved")
 
 # -----------------------------
 # SAVE MODEL

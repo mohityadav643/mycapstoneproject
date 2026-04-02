@@ -270,7 +270,7 @@ with tab1:
         col1.metric("Accuracy", f"{metrics['accuracy']*100:.2f}%")
         col2.metric("Precision", f"{metrics['precision']*100:.2f}%")
         col3.metric("Recall", f"{metrics['recall']*100:.2f}%")
-        col4.metric("F1 Score", f"{metrics['f1_score']*100:.2f}%")
+        col4.metric("F1 Score", f"{metrics['f1']*100:.2f}%")
 
 # =========================
 # 🤖 TAB 2 (CHATBOT)
