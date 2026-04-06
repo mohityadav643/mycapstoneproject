@@ -11,10 +11,14 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.applications.efficientnet import preprocess_input
 from openai import OpenAI   # ✅ NEW
 
-# 🔥 CHATBOT CLIENT
+# 🔥 CHATBOT CLIENT (FINAL FIXED - NOTHING REMOVED)
 client = OpenAI(
-    api_key="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",
-    base_url="https://openrouter.ai/api/v1"
+    api_key="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",   # 🔥 OpenRouter key
+    base_url="https://openrouter.ai/api/v1",
+    default_headers={
+        "HTTP-Referer": "http://localhost:8501",
+        "X-Title": "Cattle Breed Detection"
+    }
 )
 
 # --------------------------
@@ -133,17 +137,14 @@ st.markdown('<div class="hero-title">Cattle Breed <span>Detection</span></div>',
 st.markdown('<div class="hero-sub">Upload an image or use URL to detect cattle breed instantly</div>', unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 🔥 TABS (NEW)
+# 🔥 TABS
 tab1, tab2 = st.tabs(["🐄 Breed Detection", "🤖 Chatbot"])
 
 # =========================
-# 🐄 TAB 1 (YOUR FULL CODE)
+# 🐄 TAB 1
 # =========================
 with tab1:
 
-    # --------------------------
-    # 🧠 ABOUT
-    # --------------------------
     st.markdown("## 🧠 About This Project")
     st.markdown("""
     <div class="glass">
@@ -151,9 +152,6 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
-    # --------------------------
-    # MAIN LAYOUT
-    # --------------------------
     col1, col2 = st.columns([1.2, 1])
 
     with col1:
@@ -192,9 +190,6 @@ with tab1:
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # --------------------------
-    # 🔥 SMART PREDICTION FUNCTION
-    # --------------------------
     def smart_predict(img, filename):
 
         img_resized = img.resize((224,224))
@@ -212,17 +207,11 @@ with tab1:
 
         return results
 
-    # --------------------------
-    # PREDICTION
-    # --------------------------
     if file is not None or url_img is not None:
 
         st.markdown("## 🔍 Results")
 
-        if file is not None:
-            final_img = img
-        else:
-            final_img = url_img
+        final_img = img if file is not None else url_img
 
         result = smart_predict(final_img, "input_image")
 
@@ -237,9 +226,6 @@ with tab1:
             st.markdown("## 📘 Breed Details")
             st.info(breed_info[final_breed])
 
-    # --------------------------
-    # ⚙️ FEATURES
-    # --------------------------
     st.markdown("## ⚙️ System Features")
 
     c1, c2, c3 = st.columns(3)
@@ -247,9 +233,6 @@ with tab1:
     c2.success("🌐 URL Based Prediction")
     c3.success("🤖 Deep Learning Model")
 
-    # --------------------------
-    # 📂 DATASET INFO
-    # --------------------------
     st.markdown("## 📂 Dataset Overview")
     st.markdown(f"""
     <div class="glass">
@@ -259,9 +242,6 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
-    # --------------------------
-    # 📊 MODEL PERFORMANCE
-    # --------------------------
     if metrics:
         st.markdown("## 📊 Model Performance")
 
@@ -273,7 +253,7 @@ with tab1:
         col4.metric("F1 Score", f"{metrics['f1']*100:.2f}%")
 
 # =========================
-# 🤖 TAB 2 (CHATBOT)
+# 🤖 TAB 2
 # =========================
 with tab2:
 
@@ -285,7 +265,7 @@ with tab2:
         with st.spinner("Thinking..."):
             try:
                 response = client.chat.completions.create(
-                    model="openai/gpt-3.5-turbo",
+                    model="meta-llama/llama-3-8b-instruct",
                     messages=[
                         {"role": "system", "content": "You are an expert in cattle breeds."},
                         {"role": "user", "content": user_input}
