@@ -1,5 +1,6 @@
 venv/
-tf_env/
+dataset/
+*.h5
+*.npy
 __pycache__/
 *.pyc
-.env
