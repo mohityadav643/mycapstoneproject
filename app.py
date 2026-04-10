@@ -13,7 +13,7 @@ from openai import OpenAI   # ✅ NEW
 
 # 🔥 CHATBOT CLIENT (FINAL FIXED - NOTHING REMOVED)
 client = OpenAI(
-    api_key="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",   # 🔥 OpenRouter key
+    api_key="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",   # 🔥 OpenRouter key
     base_url="https://openrouter.ai/api/v1",
     default_headers={
         "HTTP-Referer": "http://localhost:8501",
