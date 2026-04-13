@@ -1,0 +1,12 @@
+venv
+__pycache__
+*.pyc
+.git
+.gitignore
+dataset
+*.h5
+*.jpg
+*.png
+*.jpeg
+*.zip
+*.csv

@@ -5,15 +5,17 @@ import tensorflow as tf
 import os
 import base64
 import json
+
 from io import BytesIO
 import requests
 import matplotlib.pyplot as plt
 from tensorflow.keras.applications.efficientnet import preprocess_input
 from openai import OpenAI   # ✅ NEW
 
+
 # 🔥 CHATBOT CLIENT (FINAL FIXED - NOTHING REMOVED)
 client = OpenAI(
-    api_key="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",   # 🔥 OpenRouter key
+    api_key="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",
     base_url="https://openrouter.ai/api/v1",
     default_headers={
         "HTTP-Referer": "http://localhost:8501",
@@ -130,6 +132,31 @@ breed_info = {
     "surti": "Buffalo breed known for moderate milk."
 }
 
+# 🌍 NEW CODE: Breed Location Mapping
+breed_location = {
+    "Amritmahal": {"lat": 12.97, "lon": 77.59, "place": "Karnataka"},
+    "Ayrshire": {"lat": 55.46, "lon": -4.63, "place": "Scotland"},
+    "Bargur": {"lat": 11.55, "lon": 77.45, "place": "Tamil Nadu"},
+    "bhadwari": {"lat": 26.50, "lon": 78.63, "place": "UP / MP"},
+    "Chhattisgarhi": {"lat": 21.25, "lon": 81.63, "place": "Chhattisgarh"},
+    "Dangi": {"lat": 20.59, "lon": 73.78, "place": "Maharashtra"},
+    "Deoni": {"lat": 18.28, "lon": 76.62, "place": "Maharashtra"},
+    "Gir": {"lat": 21.12, "lon": 70.82, "place": "Gujarat"},
+    "Hallikar": {"lat": 13.34, "lon": 77.10, "place": "Karnataka"},
+    "Jaffarabadi": {"lat": 21.35, "lon": 72.13, "place": "Gujarat"},
+    "Kangayam": {"lat": 11.00, "lon": 77.56, "place": "Tamil Nadu"},
+    "Kankrej": {"lat": 23.59, "lon": 72.37, "place": "Gujarat"},
+    "malvi": {"lat": 23.25, "lon": 77.41, "place": "Madhya Pradesh"},
+    "murrah": {"lat": 28.70, "lon": 76.99, "place": "Haryana"},
+    "nagori": {"lat": 27.20, "lon": 73.73, "place": "Rajasthan"},
+    "nagpuri": {"lat": 21.15, "lon": 79.09, "place": "Maharashtra"},
+    "Ongole": {"lat": 15.50, "lon": 80.05, "place": "Andhra Pradesh"},
+    "Rathi": {"lat": 28.02, "lon": 73.31, "place": "Rajasthan"},
+    "Red Sindhi": {"lat": 25.40, "lon": 68.35, "place": "Sindh"},
+    "Sahiwal": {"lat": 30.67, "lon": 73.11, "place": "Punjab"},
+    "surti": {"lat": 22.30, "lon": 73.20, "place": "Gujarat"}
+}
+
 # --------------------------
 # HERO SECTION 🔥
 # --------------------------
@@ -225,6 +252,22 @@ with tab1:
         if final_breed in breed_info:
             st.markdown("## 📘 Breed Details")
             st.info(breed_info[final_breed])
+
+        # 🌍 NEW CODE: MAP DISPLAY
+        if final_breed in breed_location:
+            loc = breed_location[final_breed]
+
+            st.markdown("## 🗺️ Breed Origin Map")
+            st.write(f"📍 Found in: {loc['place']}")
+
+            map_data = {
+                "lat": [loc["lat"]],
+                "lon": [loc["lon"]]
+            }
+
+            st.map(map_data)
+        else:
+            st.warning("Location data not available")
 
     st.markdown("## ⚙️ System Features")
 
