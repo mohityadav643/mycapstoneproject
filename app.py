@@ -1,4 +1,5 @@
 import streamlit as st
+import tensorflow as tf
 import numpy as np
 from PIL import Image
 import tensorflow as tf
@@ -86,7 +87,11 @@ st.markdown(f"""
 # --------------------------
 # LOAD MODEL
 # --------------------------
-model = tf.keras.models.load_model("breed_classifier.h5")
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model("breed_classifier.h5")
+
+model = load_model()
 class_names = sorted(os.listdir("dataset/train"))
 
 # --------------------------
