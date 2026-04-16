@@ -15,7 +15,7 @@ from openai import OpenAI   # ✅ NEW
 
 # 🔥 CHATBOT CLIENT (FINAL FIXED - NOTHING REMOVED)
 client = OpenAI(
-    api_key="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",
+    api_key="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",
     base_url="https://openrouter.ai/api/v1",
     default_headers={
         "HTTP-Referer": "http://localhost:8501",
