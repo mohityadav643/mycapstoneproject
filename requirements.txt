@@ -4,5 +4,5 @@ pillow
 matplotlib
 requests
 scikit-learn
-tensorflow==2.16.1
+tensorflow-cpu==2.12.0
 openai
