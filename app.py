@@ -1,5 +1,6 @@
 import streamlit as st
 import tensorflow as tf
+from tensorflow import keras
 import numpy as np
 from PIL import Image
 import tensorflow as tf
@@ -90,7 +91,7 @@ st.markdown(f"""
 @st.cache_resource
 def load_model():
     from tensorflow.keras.models import load_model
-    return load_model("breed_classifier.h5", compile=False)
+    return keras.models.load_model("breed_classifier.h5", compile=False)
 
 model = load_model()
 
