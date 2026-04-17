@@ -1,6 +1,5 @@
+
 import streamlit as st
-import tensorflow as tf
-from tensorflow import keras
 import numpy as np
 from PIL import Image
 import tensorflow as tf
@@ -86,18 +85,9 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --------------------------
-# LOAD MODEL (FIXED)
+# LOAD MODEL
 # --------------------------
-@st.cache_resource
-def load_model():
-    from tensorflow.keras.models import load_model
-    return keras.models.load_model("breed_classifier.h5", compile=False)
-
-model = load_model()
-
-if model is None:
-    st.stop()
-
+model = tf.keras.models.load_model("breed_classifier.h5")
 class_names = sorted(os.listdir("dataset/train"))
 
 # --------------------------
@@ -264,6 +254,7 @@ with tab1:
             st.markdown("## 📘 Breed Details")
             st.info(breed_info[final_breed])
 
+        # 🌍 NEW CODE: MAP DISPLAY
         if final_breed in breed_location:
             loc = breed_location[final_breed]
 
@@ -333,3 +324,4 @@ with tab2:
 # --------------------------
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("<center style='color:gray;'>Capstone Project - Mohit Yadav</center>", unsafe_allow_html=True)
+
