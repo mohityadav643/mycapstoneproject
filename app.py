@@ -85,13 +85,18 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --------------------------
-# LOAD MODEL
+# LOAD MODEL (FIXED)
 # --------------------------
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("breed_classifier.h5")
+    from tensorflow.keras.models import load_model
+    return load_model("breed_classifier.h5", compile=False)
 
 model = load_model()
+
+if model is None:
+    st.stop()
+
 class_names = sorted(os.listdir("dataset/train"))
 
 # --------------------------
@@ -258,7 +263,6 @@ with tab1:
             st.markdown("## 📘 Breed Details")
             st.info(breed_info[final_breed])
 
-        # 🌍 NEW CODE: MAP DISPLAY
         if final_breed in breed_location:
             loc = breed_location[final_breed]
 
