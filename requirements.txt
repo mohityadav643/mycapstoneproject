@@ -10,5 +10,4 @@ keras==2.10.0
 
 protobuf==3.19.6
 typing_extensions==4.5.0
-
-openai
+openai==1.30.5
