@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 from PIL import Image
@@ -16,7 +15,7 @@ from openai import OpenAI   # ✅ NEW
 
 # 🔥 CHATBOT CLIENT (FINAL FIXED - NOTHING REMOVED)
 client = OpenAI(
-    api_key="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",
+    api_key="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",
     base_url="https://openrouter.ai/api/v1",
     default_headers={
         "HTTP-Referer": "http://localhost:8501",
