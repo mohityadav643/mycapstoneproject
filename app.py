@@ -15,7 +15,7 @@ from openai import OpenAI   # ✅ NEW
 
 # 🔥 CHATBOT CLIENT (FINAL FIXED - NOTHING REMOVED)
 client = OpenAI(
-    api_key="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",
+    api_key="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",
     base_url="https://openrouter.ai/api/v1",
     default_headers={
         "HTTP-Referer": "http://localhost:8501",
@@ -49,7 +49,7 @@ st.markdown(f"""
 }}
 
 .hero-title {{
-    font-size: 65px;
+    font-size: clamp(28px, 6vw, 65px);
     font-weight: 800;
     text-align: center;
     color: white;
@@ -62,7 +62,7 @@ st.markdown(f"""
 .hero-sub {{
     text-align: center;
     color: #d1d5db;
-    font-size: 20px;
+    font-size: clamp(14px, 3vw, 20px);
     margin-bottom: 30px;
 }}
 
@@ -79,6 +79,11 @@ st.markdown(f"""
     border-radius: 12px;
     height: 45px;
     font-size: 16px;
+    width: 100%;
+}}
+
+.block-container {{
+    padding: 1rem;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -165,7 +170,7 @@ st.markdown('<div class="hero-sub">Upload an image or use URL to detect cattle b
 st.markdown("<br>", unsafe_allow_html=True)
 
 # 🔥 TABS
-tab1, tab2 = st.tabs(["🐄 Breed Detection", "🤖 Chatbot"])
+tab1, tab2 = st.tabs(["🐄 Detect", "🤖 Chat"])
 
 # =========================
 # 🐄 TAB 1
@@ -196,14 +201,14 @@ with tab1:
 
                 url_img = Image.open(BytesIO(response.content)).convert("RGB")
                 url_img = url_img.copy()
-                st.image(url_img, width=450)
+                st.image(url_img, width="stretch")
 
             except:
                 st.error("❌ Invalid URL or cannot load image")
 
         if file is not None:
             img = Image.open(file).convert("RGB")
-            st.image(img, width=450)
+            st.image(img, width="stretch")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -265,7 +270,7 @@ with tab1:
                 "lon": [loc["lon"]]
             }
 
-            st.map(map_data)
+            st.map(map_data, use_container_width=True)
         else:
             st.warning("Location data not available")
 
@@ -323,4 +328,3 @@ with tab2:
 # --------------------------
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("<center style='color:gray;'>Capstone Project - Mohit Yadav</center>", unsafe_allow_html=True)
-
